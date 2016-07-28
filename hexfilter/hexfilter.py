@@ -20,11 +20,38 @@ max_num_hex_dump_values = 16
 
 class HexFilter:
 
-    def __init__(self, skip_time_stamps = False):
+    def __init__(self, skip_time_stamps = False, abs_time_stamps = False,
+                 time_stamps_round_us = 0):
         self.ts_regex = re.compile(ts_regex_pattern)
         self.dump_regex = re.compile(hex_dump_regex_pattern)
         self.skip_time_stamps = skip_time_stamps
+        self.abs_time_stamps = abs_time_stamps
+        self.time_stamps_round_us = time_stamps_round_us
+        self.prev_ts = None
         self.data_available = False
+
+    def __update_ts(self, line):
+        ts_match = self.ts_regex.match(line)
+        if ts_match is None:
+            return False
+
+        self.ts = ts_match.group(1)
+        if self.prev_ts is None:
+            self.ts_diff = 0.0
+        else:
+            self.ts_diff = float(self.ts) - float(self.prev_ts)
+        self.prev_ts = self.ts
+
+        if self.ts_diff > 0 and self.time_stamps_round_us > 0:
+            div_floor = (self.ts_diff * 1E6) // self.time_stamps_round_us
+            ts_diff_floor = self.time_stamps_round_us / 1E6 * div_floor
+            ts_diff_modulo_us = (self.ts_diff - ts_diff_floor) * 1E6
+            if (ts_diff_modulo_us - self.time_stamps_round_us / 2) < 0:
+                self.ts_diff = ts_diff_floor
+            else:
+                self.ts_diff = ts_diff_floor + self.time_stamps_round_us / 1E6
+
+        return True
 
     def parse_line(self, line):
         """ Parses a line of the log file and tries to interpret the hex data.
@@ -36,11 +63,8 @@ class HexFilter:
         internally. In this case, True will be returned.
         """
         if not self.skip_time_stamps:
-            ts_match = self.ts_regex.match(line)
-            if ts_match is None:
+            if not self.__update_ts(line):
                 return False
-
-            self.ts = ts_match.group(1)
 
         dump_match = self.dump_regex.match(line)
         if dump_match is None:
@@ -80,7 +104,10 @@ class HexFilter:
         ljust_len = 0
         str = ''
         if not self.skip_time_stamps:
-            str = '[{}] '.format(self.ts)
+            if self.abs_time_stamps:
+                str = '[{:.6f}] '.format(self.ts)
+            else:
+                str = '[{:.6f}] '.format(self.ts_diff)
             ljust_len = len(str)
 
         str = '{}{}: {}'.format(str, self.dump_addr, self.dump_data)
