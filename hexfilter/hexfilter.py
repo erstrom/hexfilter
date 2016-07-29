@@ -20,13 +20,26 @@ max_num_hex_dump_values = 16
 
 class HexFilter:
 
-    def __init__(self, skip_time_stamps = False, abs_time_stamps = False,
-                 time_stamps_round_us = 0):
+    def __init__(self, skip_timestamps = False, abs_timestamps = False,
+                 timestamps_round_us = 0):
+        """ HexFilter constructor
+
+        Keyword arguments:
+        skip_timestamps -- (bool) Don't add timestamps to the output
+                            (default False)
+        abs_timestamps  -- (bool) Add absolute timestamps to the output
+                            instead of delta times. This argument will not
+                            have any effect if skip_timestamps is True
+                            (default False).
+        timestamps_round_us -- (int) Timestamp rounding factor in microseconds.
+                                All timestamps will be rounded to the nearest
+                                timestamps_round_us microsecond
+        """
         self.ts_regex = re.compile(ts_regex_pattern)
         self.dump_regex = re.compile(hex_dump_regex_pattern)
-        self.skip_time_stamps = skip_time_stamps
-        self.abs_time_stamps = abs_time_stamps
-        self.time_stamps_round_us = time_stamps_round_us
+        self.skip_timestamps = skip_timestamps
+        self.abs_timestamps = abs_timestamps
+        self.timestamps_round_us = timestamps_round_us
         self.prev_ts = None
         self.data_available = False
 
@@ -42,14 +55,14 @@ class HexFilter:
             self.ts_diff = float(self.ts) - float(self.prev_ts)
         self.prev_ts = self.ts
 
-        if self.ts_diff > 0 and self.time_stamps_round_us > 0:
-            div_floor = (self.ts_diff * 1E6) // self.time_stamps_round_us
-            ts_diff_floor = self.time_stamps_round_us / 1E6 * div_floor
+        if self.ts_diff > 0 and self.timestamps_round_us > 0:
+            div_floor = (self.ts_diff * 1E6) // self.timestamps_round_us
+            ts_diff_floor = self.timestamps_round_us / 1E6 * div_floor
             ts_diff_modulo_us = (self.ts_diff - ts_diff_floor) * 1E6
-            if (ts_diff_modulo_us - self.time_stamps_round_us / 2) < 0:
+            if (ts_diff_modulo_us - self.timestamps_round_us / 2) < 0:
                 self.ts_diff = ts_diff_floor
             else:
-                self.ts_diff = ts_diff_floor + self.time_stamps_round_us / 1E6
+                self.ts_diff = ts_diff_floor + self.timestamps_round_us / 1E6
 
         return True
 
@@ -62,7 +75,7 @@ class HexFilter:
         If the line contains valid log data, the data will be read and stored
         internally. In this case, True will be returned.
         """
-        if not self.skip_time_stamps:
+        if not self.skip_timestamps:
             if not self.__update_ts(line):
                 return False
 
@@ -95,7 +108,10 @@ class HexFilter:
         """ Returnes the most recent hex data string or None if no hex data
         string is available. Not available could mean that no valid hex string
         has been read yet or the that the most recent string has already been
-        returned
+        returned.
+
+        The returned string will be formatted according to the setup arguments
+        of the constructor.
         """
 
         if not self.data_available:
@@ -103,8 +119,8 @@ class HexFilter:
 
         ljust_len = 0
         str = ''
-        if not self.skip_time_stamps:
-            if self.abs_time_stamps:
+        if not self.skip_timestamps:
+            if self.abs_timestamps:
                 str = '[{:.6f}] '.format(self.ts)
             else:
                 str = '[{:.6f}] '.format(self.ts_diff)

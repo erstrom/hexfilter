@@ -46,8 +46,8 @@ def main():
             outfp = open(parsed_args.output_file, "w")
         else:
             outfp = sys.stdout
-        hf = HexFilter(parsed_args.skip_time_stamps,
-                       parsed_args.abs_time_stamps,
+        hf = HexFilter(parsed_args.skip_timestamps,
+                       parsed_args.abs_timestamps,
                        parsed_args.rounding)
         for line in infp:
             if hf.parse_line(line):
