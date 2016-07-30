@@ -1,4 +1,4 @@
-from hexfilter import HexFilter
+from hexfilter import HexFilterLinux
 
 import argparse
 import pdb
@@ -24,7 +24,7 @@ def load_options():
                                "stamps as is) to the output instead of "
                                "converting all times tamps to delta times "
                                "(default behaviour)")
-    parser.add_argument('-r','--rounding', type = int,
+    parser.add_argument('-r','--rounding', type = int, default = 0,
                         help = "Timestamp rounding value in us."
                                "This option is not effective when absolute "
                                "timestamps are used. "
@@ -46,9 +46,9 @@ def main():
             outfp = open(parsed_args.output_file, "w")
         else:
             outfp = sys.stdout
-        hf = HexFilter(parsed_args.skip_timestamps,
-                       parsed_args.abs_timestamps,
-                       parsed_args.rounding)
+        hf = HexFilterLinux(skip_timestamps = parsed_args.skip_timestamps,
+                            abs_timestamps = parsed_args.abs_timestamps,
+                            timestamps_round_us = parsed_args.rounding)
         for line in infp:
             if hf.parse_line(line):
                 result = hf.get_hex()
