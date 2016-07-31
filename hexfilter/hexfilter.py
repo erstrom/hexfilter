@@ -27,19 +27,21 @@ default_valid_ascii_chars = string.digits + string.ascii_letters + \
                             string.punctuation
 default_max_num_hex_dump_values = 16
 
+
 ##
 # HexFilter abstract base class
 class HexFilter:
     __metaclass__ = ABCMeta
+
     def __init__(self,
-                 ts_regex_pattern = None,
-                 hex_dump_regex_pattern = default_hex_dump_regex_pattern,
-                 valid_hex_data_chars = default_valid_hex_data_chars,
-                 valid_ascii_chars = default_valid_ascii_chars,
-                 max_num_hex_dump_values = default_max_num_hex_dump_values,
-                 skip_timestamps = False,
-                 abs_timestamps = False,
-                 timestamps_round_us = 0):
+                 ts_regex_pattern=None,
+                 hex_dump_regex_pattern=default_hex_dump_regex_pattern,
+                 valid_hex_data_chars=default_valid_hex_data_chars,
+                 valid_ascii_chars=default_valid_ascii_chars,
+                 max_num_hex_dump_values=default_max_num_hex_dump_values,
+                 skip_timestamps=False,
+                 abs_timestamps=False,
+                 timestamps_round_us=0):
         """ HexFilter constructor
 
         This is the HexFilter base class constructor used by inheriting
@@ -143,6 +145,7 @@ class HexFilter:
         """
         pass
 
+
 ##
 # HexFilterLinux
 class HexFilterLinux(HexFilter):
@@ -150,15 +153,15 @@ class HexFilterLinux(HexFilter):
     """ HexFilter class for filtering linux print_hex_data dumps
     from a linux kernel log.
     """
-    def __init__(self, skip_timestamps = False, abs_timestamps = False,
-                 timestamps_round_us = 0):
+    def __init__(self, skip_timestamps=False, abs_timestamps=False,
+                 timestamps_round_us=0):
         HexFilter.__init__(self,
-                           ts_regex_pattern = linux_ts_regex_pattern,
-                           hex_dump_regex_pattern = linux_hex_dump_regex_pattern,
-                           valid_hex_data_chars = linux_valid_hex_data_chars,
-                           skip_timestamps = skip_timestamps,
-                           abs_timestamps = abs_timestamps,
-                           timestamps_round_us = timestamps_round_us)
+                           ts_regex_pattern=linux_ts_regex_pattern,
+                           hex_dump_regex_pattern=linux_hex_dump_regex_pattern,
+                           valid_hex_data_chars=linux_valid_hex_data_chars,
+                           skip_timestamps=skip_timestamps,
+                           abs_timestamps=abs_timestamps,
+                           timestamps_round_us=timestamps_round_us)
 
     def parse_line(self, line):
         """ Parses a line of the log file and tries to interpret the hex data.
