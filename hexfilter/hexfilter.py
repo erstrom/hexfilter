@@ -157,7 +157,7 @@ class HexFilterLinux(HexFilter):
     """
     def __init__(self, skip_timestamps=False, abs_timestamps=False,
                  timestamps_round_us=0, log_has_timestamps=True,
-                 dump_desc=None):
+                 dump_desc=None, include_dump_desc_in_output=False):
         """ HexFilterLinux constructor
 
         Constructor for linux kernel log parser .
@@ -184,6 +184,9 @@ class HexFilterLinux(HexFilter):
                                    string in the dump. If any string matches, the dump
                                    will be considered valid.
                                    (default None)
+        include_dump_desc_in_output --(bool) Include the dump description string in the
+                                   produced output
+                                   (default False)
         """
         if log_has_timestamps:
             regex_pattern = linux_hex_dump_ts_regex_pattern
@@ -198,6 +201,7 @@ class HexFilterLinux(HexFilter):
                            timestamps_round_us=timestamps_round_us)
 
         self.log_has_timestamps = log_has_timestamps
+        self.include_dump_desc_in_output = include_dump_desc_in_output
         if dump_desc:
             self.dump_desc_regexes = []
             if isinstance(dump_desc, basestring):
@@ -230,12 +234,12 @@ class HexFilterLinux(HexFilter):
                 if not self.update_ts(log_ts):
                     return False
 
-        dump_desc_str = dump_match.group(match_idx)
+        self.cur_dump_desc = dump_match.group(match_idx)
         match_idx += 1
         if self.dump_desc_regexes:
             matching_str_found = False
             for regex in self.dump_desc_regexes:
-                desc_match = regex.match(dump_desc_str)
+                desc_match = regex.match(self.cur_dump_desc)
                 if desc_match:
                     matching_str_found = True
                     break
@@ -284,6 +288,10 @@ class HexFilterLinux(HexFilter):
                 str = '[{:.6f}] '.format(self.ts)
             else:
                 str = '[{:.6f}] '.format(self.ts_diff)
+            ljust_len = len(str)
+
+        if self.include_dump_desc_in_output and self.cur_dump_desc:
+            str = '{}{} '.format(str, self.cur_dump_desc)
             ljust_len = len(str)
 
         str = '{}{}: {}'.format(str, self.dump_addr, self.dump_data)
