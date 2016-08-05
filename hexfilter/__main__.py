@@ -43,6 +43,10 @@ def load_options():
                              "will be filtered out."
                              "If no --desc-str option is given, no descripton "
                              "filtering will be performed.")
+    parser.add_argument('-k', '--keep-desc-str', action="store_true",
+                        help="Keep the description string of the dump in "
+                             "the filtered output.")
+
     parsed_args = parser.parse_args()
 
 
@@ -63,7 +67,8 @@ def main():
                             abs_timestamps=parsed_args.abs_timestamps,
                             timestamps_round_us=parsed_args.rounding,
                             dump_desc=parsed_args.desc_str,
-                            log_has_timestamps=(not parsed_args.no_timestamps))
+                            log_has_timestamps=(not parsed_args.no_timestamps),
+                            include_dump_desc_in_output=parsed_args.keep_desc_str)
         for line in infp:
             if hf.parse_line(line):
                 result = hf.get_hex()
