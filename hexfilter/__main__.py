@@ -17,6 +17,11 @@ def load_options():
     parser.add_argument('-o', '--output-file',
                         help="Filtered output file. If omitted, "
                              "the output will be written to stdout")
+    parser.add_argument('-n', '--no-timestamps', action="store_true",
+                        help="Specifies whether or not the input file "
+                             "contains time stamps. "
+                             "If set, --skip-timestamps, --abs-timestamps "
+                             "and --rounding will have no effect.")
     parser.add_argument('-s', '--skip-timestamps', action="store_true",
                         help="Skip all log timestamps when generating the "
                              "output.")
@@ -31,6 +36,13 @@ def load_options():
                              "timestamps are used. "
                              "All delta times will be rounded to the "
                              "nearest rounding step.")
+    parser.add_argument('-d', '--desc-str', nargs='+', type=str,
+                        help="Description string(s) of the dumps."
+                             "Only dumps containing a description string "
+                             "matching any of the provided desc strings "
+                             "will be filtered out."
+                             "If no --desc-str option is given, no descripton "
+                             "filtering will be performed.")
     parsed_args = parser.parse_args()
 
 
@@ -49,7 +61,9 @@ def main():
             outfp = sys.stdout
         hf = HexFilterLinux(skip_timestamps=parsed_args.skip_timestamps,
                             abs_timestamps=parsed_args.abs_timestamps,
-                            timestamps_round_us=parsed_args.rounding)
+                            timestamps_round_us=parsed_args.rounding,
+                            dump_desc=parsed_args.desc_str,
+                            log_has_timestamps=(not parsed_args.no_timestamps))
         for line in infp:
             if hf.parse_line(line):
                 result = hf.get_hex()
