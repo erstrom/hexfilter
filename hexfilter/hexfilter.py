@@ -283,7 +283,7 @@ class HexFilterLinux(HexFilter):
 
         ljust_len = 0
         str = ''
-        if not self.skip_timestamps:
+        if self.log_has_timestamps and not self.skip_timestamps:
             if self.abs_timestamps:
                 str = '[{:.6f}] '.format(self.ts)
             else:
