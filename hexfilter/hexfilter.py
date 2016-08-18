@@ -18,6 +18,7 @@ else:
     basestring = basestring
 
 from abc import ABCMeta, abstractmethod
+from collections import deque
 
 ##
 # Linux definitions:
@@ -55,7 +56,8 @@ class HexFilter:
                  max_num_hex_dump_values=default_max_num_hex_dump_values,
                  skip_timestamps=False,
                  abs_timestamps=False,
-                 timestamps_round_us=0):
+                 timestamps_round_us=0,
+                 keep_n_lines_before_each_dump=0):
         """ HexFilter constructor
 
         This is the HexFilter base class constructor used by inheriting
@@ -77,6 +79,12 @@ class HexFilter:
         timestamps_round_us     -- (int) Timestamp rounding factor in microseconds.
                                    All timestamps will be rounded to the nearest
                                    timestamps_round_us microsecond
+        keep_n_lines_before_each_dump -- (int) Number of before-dump-lines to
+                                   store internally by parse_line.
+                                   When the number of stored lines has reached
+                                   this limit, older lines will be rotated out
+                                   before new lines are inserted
+                                   (default 0)
         """
         self.valid_hex_data_chars = valid_hex_data_chars
         self.valid_ascii_chars = valid_ascii_chars
@@ -93,6 +101,12 @@ class HexFilter:
         self.timestamps_round_us = timestamps_round_us
         self.prev_ts = None
         self.data_available = False
+
+        self.keep_n_lines_before_each_dump = keep_n_lines_before_each_dump
+        if self.keep_n_lines_before_each_dump > 0:
+            self.before_lines = deque()
+        else:
+            self.before_lines = None
 
     def update_ts(self, ts):
         """ Protected/private method used by inheriting classes.
@@ -147,6 +161,21 @@ class HexFilter:
         """
         pass
 
+    @abstractmethod
+    def get_lines_before_hex(self):
+        """ Returns the most recent non hex data string that was encountered
+        before the most recent hex dump. If no non hex data strings has been
+        encountered, None will be returned.
+
+        The hex data string will contain a number of lines set by the
+        keep_n_lines_before_each_dump argument to the constructor (at most).
+
+        After the string containing the lines has been returned, the
+        internal storage will be cleared. Thus, subsequent calls to this
+        function will return None until new non hex lines have been encountered.
+        """
+        pass
+
 
 ##
 # HexFilterLinux
@@ -157,7 +186,8 @@ class HexFilterLinux(HexFilter):
     """
     def __init__(self, skip_timestamps=False, abs_timestamps=False,
                  timestamps_round_us=0, log_has_timestamps=True,
-                 dump_desc=None, include_dump_desc_in_output=False):
+                 dump_desc=None, include_dump_desc_in_output=False,
+                 keep_n_lines_before_each_dump=0):
         """ HexFilterLinux constructor
 
         Constructor for linux kernel log parser .
@@ -198,10 +228,12 @@ class HexFilterLinux(HexFilter):
                            valid_hex_data_chars=linux_valid_hex_data_chars,
                            skip_timestamps=skip_timestamps,
                            abs_timestamps=abs_timestamps,
-                           timestamps_round_us=timestamps_round_us)
+                           timestamps_round_us=timestamps_round_us,
+                           keep_n_lines_before_each_dump=keep_n_lines_before_each_dump)
 
         self.log_has_timestamps = log_has_timestamps
         self.include_dump_desc_in_output = include_dump_desc_in_output
+
         if dump_desc:
             self.dump_desc_regexes = []
             if isinstance(dump_desc, basestring):
@@ -211,6 +243,23 @@ class HexFilterLinux(HexFilter):
                     self.dump_desc_regexes.append(re.compile(dump_desc_item))
         else:
             self.dump_desc_regexes = None
+
+    def __store_non_hex_line(self, line, lines, limit):
+
+        if limit == len(lines):
+            # Shift out the oldest stored line and make place
+            # for a new line
+            lines.rotate(1)
+            lines.popleft()
+
+        # Append the new line before the old ones
+        lines.appendleft(line)
+
+    def __handle_non_match(self, line):
+
+        if self.keep_n_lines_before_each_dump > 0:
+            self.__store_non_hex_line(line, self.before_lines,
+                                      self.keep_n_lines_before_each_dump)
 
     def parse_line(self, line):
         """ Parses a line of the log file and tries to interpret the hex data.
@@ -224,6 +273,7 @@ class HexFilterLinux(HexFilter):
 
         dump_match = self.dump_regex.match(line)
         if dump_match is None:
+            self.__handle_non_match(line)
             return False
 
         match_idx = 1
@@ -300,3 +350,20 @@ class HexFilterLinux(HexFilter):
         str = '{}{}'.format(str, self.dump_data_ascii)
         self.data_available = False
         return str
+
+    def __get_non_hex_lines(self, lines):
+
+        if lines is None or len(lines) == 0:
+            return None
+
+        str = ''
+        for line in reversed(lines):
+            str = '{}{}'.format(str, line)
+
+        lines.clear()
+
+        return str
+
+    def get_lines_before_hex(self):
+
+        return self.__get_non_hex_lines(self.before_lines)

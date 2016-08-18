@@ -65,6 +65,13 @@ def load_options():
     parser.add_argument('-k', '--keep-desc-str', action="store_true",
                         help="Keep the description string of the dump in "
                              "the filtered output.")
+    parser.add_argument('-b', '--keep-non-hex-before', type=int, default=0,
+                        metavar='N',
+                        help="Keep N non hex dump lines from the input before "
+                             "each valid hex dump. "
+                             "These non hex dump lines will be added to the "
+                             "filtered output before every burst of detected "
+                             "hex dumps. ")
 
     parsed_args = parser.parse_args()
 
@@ -87,11 +94,17 @@ def main():
                             timestamps_round_us=parsed_args.rounding,
                             dump_desc=parsed_args.desc_str,
                             log_has_timestamps=(not parsed_args.no_timestamps),
-                            include_dump_desc_in_output=parsed_args.keep_desc_str)
+                            include_dump_desc_in_output=parsed_args.keep_desc_str,
+                            keep_n_lines_before_each_dump=parsed_args.keep_non_hex_before)
         for line in infp:
             if hf.parse_line(line):
+                if parsed_args.keep_non_hex_before > 0:
+                    before = hf.get_lines_before_hex()
+                    if before:
+                        outfp.write("%s" % (before))
                 result = hf.get_hex()
                 outfp.write("%s\n" % (result))
+
     except:
         type, value, tb = sys.exc_info()
         traceback.print_exc()
