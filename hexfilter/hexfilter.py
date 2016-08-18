@@ -39,7 +39,7 @@ linux_valid_hex_data_chars = '0123456789abcdef '
 default_hex_dump_regex_pattern = '.+([0-9a-fA-F]{8}):\s(.+)'
 default_valid_hex_data_chars = string.hexdigits + ' '
 default_valid_ascii_chars = string.digits + string.ascii_letters + \
-                            string.punctuation
+                            string.punctuation + ' '
 default_max_num_hex_dump_values = 16
 
 
