@@ -151,7 +151,7 @@ class HexFilter:
 
     @abstractmethod
     def get_hex(self):
-        """ Returnes the most recent hex data string or None if no hex data
+        """ Returns the most recent hex data string or None if no hex data
         string is available. Not available could mean that no valid hex string
         has been read yet or the that the most recent string has already been
         returned.
@@ -319,7 +319,7 @@ class HexFilterLinux(HexFilter):
         return True
 
     def get_hex(self):
-        """ Returnes the most recent hex data string or None if no hex data
+        """ Returns the most recent hex data string or None if no hex data
         string is available. Not available could mean that no valid hex string
         has been read yet or the that the most recent string has already been
         returned.
