@@ -21,7 +21,7 @@ description = \
 
 epilog = \
 "For full documentation, please visit:\n\n" \
-"http://hexfilter.readthedocs.io\n"
+"http://hexfilter.readthedocs.io\n\n"
 
 def load_options():
     global parsed_args
@@ -60,7 +60,7 @@ def load_options():
                              "Only dumps containing a description string "
                              "matching any of the provided desc strings "
                              "will be filtered out. "
-                             "If no --desc-str option is given, no descripton "
+                             "If no --desc-str option is given, no description "
                              "filtering will be performed.")
     parser.add_argument('-k', '--keep-desc-str', action="store_true",
                         help="Keep the description string of the dump in "
