@@ -280,9 +280,8 @@ class HexFilterLinux(HexFilter):
         if self.log_has_timestamps:
             log_ts = dump_match.group(match_idx)
             match_idx += 1
-            if not self.skip_timestamps:
-                if not self.update_ts(log_ts):
-                    return False
+            if not self.skip_timestamps and not self.update_ts(log_ts):
+                return False
 
         self.cur_dump_desc = dump_match.group(match_idx)
         match_idx += 1
