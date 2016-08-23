@@ -186,7 +186,8 @@ class HexFilterLinux(HexFilter):
     """
     def __init__(self, skip_timestamps=False, abs_timestamps=False,
                  timestamps_round_us=0, log_has_timestamps=True,
-                 dump_desc=None, include_dump_desc_in_output=False,
+                 dump_desc=None, dump_desc_invert=None,
+                 include_dump_desc_in_output=False,
                  keep_n_lines_before_each_dump=0):
         """ HexFilterLinux constructor
 
@@ -214,6 +215,8 @@ class HexFilterLinux(HexFilter):
                                    string in the dump. If any string matches, the dump
                                    will be considered valid.
                                    (default None)
+        dump_desc_invert        -- (string or array) Same as dump_desc but matching
+                                   strings will be removed from the output.
         include_dump_desc_in_output --(bool) Include the dump description string in the
                                    produced output
                                    (default False)
@@ -239,10 +242,20 @@ class HexFilterLinux(HexFilter):
             if isinstance(dump_desc, basestring):
                 self.dump_desc_regexes.append(re.compile(dump_desc))
             elif isinstance(dump_desc, (list, tuple)):
-                for dump_desc_item in dump_desc:
-                    self.dump_desc_regexes.append(re.compile(dump_desc_item))
+                for item in dump_desc:
+                    self.dump_desc_regexes.append(re.compile(item))
         else:
             self.dump_desc_regexes = None
+
+        if dump_desc_invert:
+            self.dump_desc_invert_regexes = []
+            if isinstance(dump_desc_invert, basestring):
+                self.dump_desc_invert_regexes.append(re.compile(dump_desc_invert))
+            elif isinstance(dump_desc_invert, (list, tuple)):
+                for item in dump_desc_invert:
+                    self.dump_desc_invert_regexes.append(re.compile(item))
+        else:
+            self.dump_desc_invert_regexes = None
 
     def __store_non_hex_line(self, line, lines, limit):
 
@@ -260,6 +273,18 @@ class HexFilterLinux(HexFilter):
         if self.keep_n_lines_before_each_dump > 0:
             self.__store_non_hex_line(line, self.before_lines,
                                       self.keep_n_lines_before_each_dump)
+
+    def __match_dump_desc(self, regexes):
+
+        matching_str_found = False
+
+        for regex in regexes:
+            desc_match = regex.match(self.cur_dump_desc)
+            if desc_match:
+                matching_str_found = True
+                break
+
+        return matching_str_found
 
     def parse_line(self, line):
         """ Parses a line of the log file and tries to interpret the hex data.
@@ -285,14 +310,13 @@ class HexFilterLinux(HexFilter):
 
         self.cur_dump_desc = dump_match.group(match_idx)
         match_idx += 1
+
         if self.dump_desc_regexes:
-            matching_str_found = False
-            for regex in self.dump_desc_regexes:
-                desc_match = regex.match(self.cur_dump_desc)
-                if desc_match:
-                    matching_str_found = True
-                    break
-            if not matching_str_found:
+            if not self.__match_dump_desc(self.dump_desc_regexes):
+                return False
+
+        if self.dump_desc_invert_regexes:
+            if self.__match_dump_desc(self.dump_desc_invert_regexes):
                 return False
 
         self.dump_addr = dump_match.group(match_idx)

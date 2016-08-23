@@ -62,6 +62,11 @@ def load_options():
                              "will be filtered out. "
                              "If no --desc-str option is given, no description "
                              "filtering will be performed.")
+    parser.add_argument('-v', '--desc-str-invert', nargs='+', type=str,
+                        help="Description string(s) of the dumps to be. "
+                             "excluded. Similar to --desc-str, but all "
+                             "matching descriptions will be excluded from the "
+                             "dump.")
     parser.add_argument('-k', '--keep-desc-str', action="store_true",
                         help="Keep the description string of the dump in "
                              "the filtered output.")
@@ -93,6 +98,7 @@ def main():
                             abs_timestamps=parsed_args.abs_timestamps,
                             timestamps_round_us=parsed_args.rounding,
                             dump_desc=parsed_args.desc_str,
+                            dump_desc_invert=parsed_args.desc_str_invert,
                             log_has_timestamps=(not parsed_args.no_timestamps),
                             include_dump_desc_in_output=parsed_args.keep_desc_str,
                             keep_n_lines_before_each_dump=parsed_args.keep_non_hex_before)
