@@ -77,6 +77,9 @@ def load_options():
                              "These non hex dump lines will be added to the "
                              "filtered output before every burst of detected "
                              "hex dumps. ")
+    parser.add_argument('--skip-ascii', action="store_true",
+                        help="Don't include the ascii part of the hexdump in "
+                             "the output.")
 
     parsed_args = parser.parse_args()
 
@@ -101,7 +104,8 @@ def main():
                             dump_desc_invert=parsed_args.desc_str_invert,
                             log_has_timestamps=(not parsed_args.no_timestamps),
                             include_dump_desc_in_output=parsed_args.keep_desc_str,
-                            keep_n_lines_before_each_dump=parsed_args.keep_non_hex_before)
+                            keep_n_lines_before_each_dump=parsed_args.keep_non_hex_before,
+                            remove_ascii_part=parsed_args.skip_ascii)
         for line in infp:
             if hf.parse_line(line):
                 if parsed_args.keep_non_hex_before > 0:

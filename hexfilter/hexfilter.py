@@ -188,7 +188,8 @@ class HexFilterLinux(HexFilter):
                  timestamps_round_us=0, log_has_timestamps=True,
                  dump_desc=None, dump_desc_invert=None,
                  include_dump_desc_in_output=False,
-                 keep_n_lines_before_each_dump=0):
+                 keep_n_lines_before_each_dump=0,
+                 remove_ascii_part=False):
         """ HexFilterLinux constructor
 
         Constructor for linux kernel log parser .
@@ -220,6 +221,8 @@ class HexFilterLinux(HexFilter):
         include_dump_desc_in_output --(bool) Include the dump description string in the
                                    produced output
                                    (default False)
+        remove_ascii_part       -- (bool) Remove the ASCII part of the hexdump from
+                                   the output.
         """
         if log_has_timestamps:
             regex_pattern = linux_hex_dump_ts_regex_pattern
@@ -236,6 +239,7 @@ class HexFilterLinux(HexFilter):
 
         self.log_has_timestamps = log_has_timestamps
         self.include_dump_desc_in_output = include_dump_desc_in_output
+        self.remove_ascii_part = remove_ascii_part
 
         if dump_desc:
             self.dump_desc_regexes = []
@@ -368,9 +372,14 @@ class HexFilterLinux(HexFilter):
             ljust_len = len(str)
 
         str = '{}{}: {}'.format(str, self.dump_addr, self.dump_data)
-        ljust_len += len(self.dump_addr) + 1 + self.max_num_hex_dump_values * 3 + 2
-        str = str.ljust(ljust_len)
-        str = '{}{}'.format(str, self.dump_data_ascii)
+
+        if not self.remove_ascii_part:
+            ljust_len += len(self.dump_addr) + 1 + self.max_num_hex_dump_values * 3 + 2
+            str = str.ljust(ljust_len)
+            str = '{}{}'.format(str, self.dump_data_ascii)
+        else:
+            str = str.rstrip(' ')
+
         self.data_available = False
         return str
 
