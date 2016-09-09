@@ -63,7 +63,7 @@ def load_options():
                              "If no --desc-str option is given, no description "
                              "filtering will be performed.")
     parser.add_argument('-v', '--desc-str-invert', nargs='+', type=str,
-                        help="Description string(s) of the dumps to be. "
+                        help="Description string(s) of the dumps to be "
                              "excluded. Similar to --desc-str, but all "
                              "matching descriptions will be excluded from the "
                              "dump.")
