@@ -115,6 +115,8 @@ def main():
                 result = hf.get_hex()
                 outfp.write("%s\n" % (result))
 
+    except IOError as err:
+        sys.stderr.write('{}\n'.format(err))
     except:
         type, value, tb = sys.exc_info()
         traceback.print_exc()
