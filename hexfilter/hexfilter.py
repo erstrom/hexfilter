@@ -119,11 +119,11 @@ class HexFilter:
         nearest timestamps_round_us microsecond.
         """
 
-        self.ts = ts
+        self.ts = float(ts)
         if self.prev_ts is None:
             self.ts_diff = 0.0
         else:
-            self.ts_diff = float(self.ts) - float(self.prev_ts)
+            self.ts_diff = self.ts - self.prev_ts
         self.prev_ts = self.ts
 
         if self.ts_diff > 0 and self.timestamps_round_us > 0:
