@@ -330,17 +330,20 @@ class HexFilterLinux(HexFilter):
         # A linux kernel hex_dump will always have at least two
         # spaces between the hex part and the ASCII part.
         dump_data_a = dump_data.split('  ', 1)
-        if len(dump_data_a) != 2:
+        if len(dump_data_a) > 2:
             return False
 
         self.dump_data = dump_data_a[0]
         if not all(c in self.valid_hex_data_chars for c in self.dump_data):
             return False
 
-        self.dump_data_ascii = dump_data_a[1]
-        self.dump_data_ascii = self.dump_data_ascii.lstrip(' ')
-        if not all(c in self.valid_ascii_chars for c in self.dump_data_ascii):
-            return False
+        if len(dump_data_a) == 2:
+            self.dump_data_ascii = dump_data_a[1]
+            self.dump_data_ascii = self.dump_data_ascii.lstrip(' ')
+            if not all(c in self.valid_ascii_chars for c in self.dump_data_ascii):
+                return False
+        else:
+            self.dump_data_ascii = None
 
         self.data_available = True
         return True
@@ -373,7 +376,7 @@ class HexFilterLinux(HexFilter):
 
         str = '{}{}: {}'.format(str, self.dump_addr, self.dump_data)
 
-        if not self.remove_ascii_part:
+        if not self.remove_ascii_part and self.dump_data_ascii is not None:
             ljust_len += len(self.dump_addr) + 1 + self.max_num_hex_dump_values * 3 + 2
             str = str.ljust(ljust_len)
             str = '{}{}'.format(str, self.dump_data_ascii)
