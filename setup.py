@@ -5,7 +5,7 @@ from setuptools import setup
 readme = open("README.rst").read()
 
 setup(name="hexfilter",
-      version="0.1",
+      version="0.2",
       description="A library/tool for extracting hex dumps from log files",
       url="https://github.com/erstrom/hexfilter",
       author="Erik Stromdahl",
