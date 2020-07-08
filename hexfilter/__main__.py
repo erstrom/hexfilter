@@ -42,6 +42,9 @@ def load_options():
                              "contains time stamps. "
                              "If set, --skip-timestamps, --abs-timestamps "
                              "and --rounding will have no effect.")
+    parser.add_argument('-f', '--ftrace', action="store_true",
+                        help="Specifies whether or not the input file "
+                             "is an ftrace output (has ftrace format).")
     parser.add_argument('-s', '--skip-timestamps', action="store_true",
                         help="Skip all log timestamps when generating the "
                              "output.")
@@ -105,7 +108,8 @@ def main():
                             log_has_timestamps=(not parsed_args.no_timestamps),
                             include_dump_desc_in_output=parsed_args.keep_desc_str,
                             keep_n_lines_before_each_dump=parsed_args.keep_non_hex_before,
-                            remove_ascii_part=parsed_args.skip_ascii)
+                            remove_ascii_part=parsed_args.skip_ascii,
+                            ftrace_format=parsed_args.ftrace)
         for line in infp:
             if hf.parse_line(line):
                 if parsed_args.keep_non_hex_before > 0:

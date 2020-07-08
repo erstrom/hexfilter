@@ -31,6 +31,11 @@ from collections import deque
 linux_hex_dump_regex_pattern = '(.+)([0-9a-f]{8}):\s(.+)'
 linux_hex_dump_ts_regex_pattern = '.*\[(\s*\d+\.\d+)\]\s+(.+)([0-9a-f]{8}):\s(.+)'
 
+# Regex matching hex dumps from ftrace logs.
+# Sample string:
+# AR6K Async-768   [000] ....   277.806985: __dump_sdio_hex: sdio wr 00000000: 08 00 00 00
+linux_ftrace_hex_dump_ts_regex_pattern = '.*(\s+\d+\.\d+):\s+(.+)([0-9a-f]{8}):\s(.+)'
+
 # Linux hex_dump uses lower case (a-f) for all hex values
 linux_valid_hex_data_chars = '0123456789abcdef '
 
@@ -189,7 +194,8 @@ class HexFilterLinux(HexFilter):
                  dump_desc=None, dump_desc_invert=None,
                  include_dump_desc_in_output=False,
                  keep_n_lines_before_each_dump=0,
-                 remove_ascii_part=False):
+                 remove_ascii_part=False,
+                 ftrace_format=False):
         """ HexFilterLinux constructor
 
         Constructor for linux kernel log parser .
@@ -224,7 +230,9 @@ class HexFilterLinux(HexFilter):
         remove_ascii_part       -- (bool) Remove the ASCII part of the hexdump from
                                    the output.
         """
-        if log_has_timestamps:
+        if ftrace_format:
+            regex_pattern = linux_ftrace_hex_dump_ts_regex_pattern
+        elif log_has_timestamps:
             regex_pattern = linux_hex_dump_ts_regex_pattern
         else:
             regex_pattern = linux_hex_dump_regex_pattern
